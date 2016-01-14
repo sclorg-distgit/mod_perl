@@ -1,0 +1,29 @@
+diff --git a/src/modules/perl/mod_perl.c b/src/modules/perl/mod_perl.c
+index 6dd9027..dd1f52a 100644
+--- a/src/modules/perl/mod_perl.c
++++ b/src/modules/perl/mod_perl.c
+@@ -653,6 +653,8 @@ int modperl_is_running(void)
+ int modperl_hook_pre_config(apr_pool_t *p, apr_pool_t *plog,
+                             apr_pool_t *ptemp)
+ {
++    int threaded = 0;
++    int async = 0;
+ #if AP_MODULE_MAGIC_AT_LEAST(20110329,0)
+     ap_reserve_module_slots_directive("PerlLoadModule");
+ #endif
+@@ -662,6 +664,15 @@ int modperl_hook_pre_config(apr_pool_t *p, apr_pool_t *plog,
+     /* perl 5.8.1+ */
+     modperl_hash_seed_init(p);
+ 
++    ap_mpm_query(AP_MPMQ_IS_THREADED, &threaded);
++    ap_mpm_query(AP_MPMQ_IS_ASYNC, &async);
++
++    if (async && threaded) {
++        ap_log_perror(APLOG_MARK, APLOG_CRIT, 0, ptemp, APLOGNO(00001)
++                      "mod_perl is not compatible with a threaded and async MPM.");
++        return !OK;
++    }
++
+     return OK;
+ }
+ 
