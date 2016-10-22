@@ -26,7 +26,7 @@
 
 Name:           %{?scl:%scl_prefix}mod_perl
 Version:        2.0.9
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        An embedded Perl interpreter for the Apache HTTP Server
 
 Group:          System Environment/Daemons
@@ -36,8 +36,6 @@ Source0:        http://www.apache.org/dist/perl/mod_perl-%{version}.tar.gz
 Source1:        perl.conf
 Source2:        perl.module.conf
 Patch1:         mod_perl-2.0.4-inline.patch
-#Patch2:         mod_perl-2.0.5-nolfs.patch
-#Patch3:         mod_perl-short-name.patch
 
 BuildRequires:  %{?scl_prefix}perl-devel, %{?scl_prefix}perl-generators, %{?scl_prefix}perl(ExtUtils::Embed)
 BuildRequires:  %{?scl:httpd24-}httpd-devel >= 2.4.0, %{?scl:httpd24-}httpd, gdbm-devel
@@ -281,6 +279,9 @@ find "$RPM_BUILD_ROOT" -type f -name *.orig -exec rm -f {} \;
 %{_mandir}/man3/Apache::Test*.3pm*
 
 %changelog
+* Mon Jul 25 2016 Petr Pisar <ppisar@redhat.com> - 2.0.9-7
+- Remove unused patches
+
 * Thu Jul 21 2016 Jitka Plesnikova <jplesnik@redhat.com> - 2.0.9-6
 - Fixed file conflict with others Perl SCLs
 - Update local path in default perl.conf
