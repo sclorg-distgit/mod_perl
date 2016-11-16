@@ -26,7 +26,7 @@
 
 Name:           %{?scl:%scl_prefix}mod_perl
 Version:        2.0.9
-Release:        7%{?dist}
+Release:        9%{?dist}
 Summary:        An embedded Perl interpreter for the Apache HTTP Server
 
 Group:          System Environment/Daemons
@@ -36,6 +36,8 @@ Source0:        http://www.apache.org/dist/perl/mod_perl-%{version}.tar.gz
 Source1:        perl.conf
 Source2:        perl.module.conf
 Patch1:         mod_perl-2.0.4-inline.patch
+# Use short_name as argv[0] (bug #1388851)
+Patch2:         mod_perl-2.0.8-short-name.patch
 
 BuildRequires:  %{?scl_prefix}perl-devel, %{?scl_prefix}perl-generators, %{?scl_prefix}perl(ExtUtils::Embed)
 BuildRequires:  %{?scl:httpd24-}httpd-devel >= 2.4.0, %{?scl:httpd24-}httpd, gdbm-devel
@@ -56,6 +58,11 @@ Requires:       %{?scl:httpd24-}httpd-mmn = %{_httpd_mmn}
 %endif
 # For Apache::SizeLimit::Core
 Requires:       %{?scl_prefix}perl(Linux::Pid)
+%if 0%{?scl:1}
+Requires(post):     grep
+Requires(preun):    grep
+Requires(preun):    sed
+%endif
 
 Conflicts:      perl516-mod_perl
 Conflicts:      rh-perl520-mod_perl
@@ -119,6 +126,7 @@ modules that use mod_perl.
 %prep
 %setup -q -n mod_perl-%{version}
 %patch1 -p1
+%patch2 -p1
 %{?scl:sed -i 's|@scl@|%{_scl_root}|' %{SOURCE1}}
 %{!?scl:sed -i 's|@scl@||' %{SOURCE1}}
 
@@ -244,6 +252,29 @@ echo "%%exclude %{_mandir}/man3/Apache::Test*.3pm*" >> exclude.files
 # break provides so mod_perl requires mod_perl-devel. We remove them here.
 find "$RPM_BUILD_ROOT" -type f -name *.orig -exec rm -f {} \;
 
+%if 0%{?scl:1}
+%post
+# Register a collection in the httpd environment
+FILE=/opt/rh/httpd24/service-environment
+if ! grep -q -e ' %{scl}"' "$FILE"; then
+printf 'HTTPD24_HTTPD_SCLS_ENABLED="${HTTPD24_HTTPD_SCLS_ENABLED} %{scl}"\n' \
+        >> "$FILE"
+fi
+exit 0
+
+%preun
+# Unregister a collection from the httpd environment
+if [ $1 -eq 0 ]; then
+    FILE=/opt/rh/httpd24/service-environment
+    if grep -q -e ' %{scl}"' "$FILE"; then
+        sed -i -e \
+    '/^HTTPD24_HTTPD_SCLS_ENABLED="${HTTPD24_HTTPD_SCLS_ENABLED} %{scl}"$/d' \
+            "$FILE"
+    fi
+fi
+exit 0
+%endif
+
 %files -f exclude.files
 %doc Changes LICENSE NOTICE README* STATUS SVN-MOVE docs/
 %if 0%{?scl:1}
@@ -279,6 +310,13 @@ find "$RPM_BUILD_ROOT" -type f -name *.orig -exec rm -f {} \;
 %{_mandir}/man3/Apache::Test*.3pm*
 
 %changelog
+* Wed Oct 26 2016 Petr Pisar <ppisar@redhat.com> - 2.0.9-9
+- Use short_name as argv[0] (bug #1388851)
+
+* Fri Oct 07 2016 Petr Pisar <ppisar@redhat.com> - 2.0.9-8
+- Register a collection into the httpd environment (bug #1382514)
+- Pass SCL environment to subprocesses (bug #1382514)
+
 * Mon Jul 25 2016 Petr Pisar <ppisar@redhat.com> - 2.0.9-7
 - Remove unused patches
 
