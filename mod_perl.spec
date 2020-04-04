@@ -29,7 +29,7 @@
 
 Name:           %{?scl:%scl_prefix}mod_perl
 Version:        2.0.11
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        An embedded Perl interpreter for the Apache HTTP Server
 # other files:                  ASL 2.0
 ## Not in binary packages
@@ -43,6 +43,8 @@ Source2:        perl.module.conf
 # Normalize documentation encoding
 Patch0:         mod_perl-2.0.10-Convert-documentation-to-UTF-8.patch
 Patch1:         mod_perl-2.0.4-inline.patch
+# Use short_name as argv[0] (bug #1809483)
+Patch2:         mod_perl-short-name.patch
 BuildRequires:  apr-devel >= 1.2.0
 BuildRequires:  apr-util-devel
 BuildRequires:  coreutils
@@ -203,6 +205,7 @@ This mod_perl extension allows to reload Perl modules that changed on the disk.
 %setup -q -n mod_perl-%{version}
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 %{?scl:sed -i 's|@scl@|%{_scl_root}|' %{SOURCE1}}
 %{!?scl:sed -i 's|@scl@||' %{SOURCE1}}
 # Remove docs/os. It's only win32 info with non-ASL-2.0 license. Bug #1199044.
@@ -399,6 +402,9 @@ exit 0
 
 
 %changelog
+* Tue Mar 03 2020 Jitka Plesnikova <jplesnik@redhat.com> - 2.0.11-3
+- Use short_name as argv[0] (#1809483)
+
 * Fri Jan 03 2020 Jitka Plesnikova <jplesnik@redhat.com> - 2.0.11-2
 - SCL
 
